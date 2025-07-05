@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "24002:24002"
+    command: ["mongod", "--port", "24002"]  
+    volumes:
+      - mongo-data:/data/db
+
+
+volumes:
+  mongo-data:
