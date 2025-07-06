@@ -69,3 +69,42 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, os.getenv("JWT_SECRET"), algorithm=ALGORITHM)
     return encoded_jwt
+
+def verify_token(token: str):
+    """
+    Verify and decode a JWT token.
+    Returns the user email if valid, raises HTTPException if invalid.
+    """
+    try:
+        payload = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return email
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_user_from_token(token: str):
+    """
+    Get user information from JWT token.
+    """
+    email = verify_token(token)
+    
+    # Find user in database
+    db_user = await users_collection.find_one({"email": email})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Remove sensitive information
+    user_info = {
+        "id": str(db_user["_id"]),
+        "username": db_user.get("username"),
+        "email": db_user["email"],
+        "role": db_user.get("role", "user"),
+        "created_at": db_user.get("created_at"),
+        "updated_at": db_user.get("updated_at")
+    }
+    
+    return user_info
