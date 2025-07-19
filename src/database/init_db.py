@@ -11,7 +11,6 @@ def init_connection():
     """
     Initialize the database connection.
     """
-    print(os.getenv("ADMIN_MONGODB_URL"))
     client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("ADMIN_MONGODB_URL"))
     return client
 
